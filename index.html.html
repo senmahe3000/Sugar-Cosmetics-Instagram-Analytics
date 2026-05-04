@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sugar Cosmetics — Instagram Performance Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0C090A;
+    --surface: #18131A;
+    --surface2: #221B26;
+    --surface3: #2C2233;
+    --rose: #E8716A;
+    --gold: #D4A853;
+    --blush: #C9768A;
+    --mint: #5BBCAA;
+    --lavender: #9B7FC8;
+    --text: #F2E8F0;
+    --text-muted: #9B8FA5;
+    --text-dim: #5C4F65;
+    --border: #2E2438;
+    --glow: rgba(232,113,106,0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    padding: 2.5rem 3rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: linear-gradient(135deg, #18131A 0%, #120D15 50%, #0C090A 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(232,113,106,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-left h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.6rem;
+    font-weight: 300;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+  .header-left h1 span { color: var(--rose); font-style: italic; font-weight: 600; }
+  .header-left p {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .header-badge {
+    display: flex; gap: 0.75rem;
+    align-items: center;
+  }
+  .badge {
+    padding: 0.4rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+  .badge-rose { background: rgba(232,113,106,0.15); color: var(--rose); border: 1px solid rgba(232,113,106,0.3); }
+  .badge-gold { background: rgba(212,168,83,0.12); color: var(--gold); border: 1px solid rgba(212,168,83,0.3); }
+
+  /* ─── FILTERS ─── */
+  .filters {
+    padding: 1.2rem 3rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-wrap: wrap;
+  }
+  .filter-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+  }
+  .filter-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 0.35rem 1rem;
+    border-radius: 100px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 400;
+  }
+  .filter-btn:hover { border-color: var(--rose); color: var(--rose); }
+  .filter-btn.active { 
+    background: rgba(232,113,106,0.15); 
+    border-color: var(--rose); 
+    color: var(--rose); 
+    font-weight: 500;
+  }
+  .filter-sep { width: 1px; height: 24px; background: var(--border); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main { padding: 2rem 3rem; }
+
+  /* ─── SECTION TITLES ─── */
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 400;
+    color: var(--text);
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .section-title .task-badge {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    background: var(--surface3);
+    color: var(--text-muted);
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-left: 0.5rem;
+  }
+
+  /* ─── KPI CARDS ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.3rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    cursor: default;
+  }
+  .kpi-card:hover { transform: translateY(-2px); border-color: var(--surface3); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    border-radius: 12px 12px 0 0;
+  }
+  .kpi-card:nth-child(1)::before { background: var(--rose); }
+  .kpi-card:nth-child(2)::before { background: var(--gold); }
+  .kpi-card:nth-child(3)::before { background: var(--blush); }
+  .kpi-card:nth-child(4)::before { background: var(--mint); }
+  .kpi-card:nth-child(5)::before { background: var(--lavender); }
+  .kpi-card:nth-child(6)::before { background: #E88FA0; }
+  .kpi-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+  }
+  .kpi-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.1rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+  }
+  .kpi-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+  }
+
+  /* ─── CHART CARDS ─── */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    overflow: hidden;
+  }
+  .chart-title {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.2rem;
+  }
+  .chart-title span { color: var(--text); font-size: 1rem; font-weight: 500; text-transform: none; letter-spacing: 0; display: block; }
+
+  /* ─── GRID LAYOUTS ─── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+  .grid-7-5 { display: grid; grid-template-columns: 7fr 5fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+  .grid-5-7 { display: grid; grid-template-columns: 5fr 7fr; gap: 1.2rem; margin-bottom: 1.2rem; }
+  .grid-full { margin-bottom: 1.2rem; }
+
+  canvas { max-height: 320px; }
+
+  /* ─── TOP POSTS TABLE ─── */
+  .top-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .top-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+  }
+  .top-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(46,36,56,0.5);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .top-table tr:last-child td { border-bottom: none; }
+  .top-table tr:hover td { background: rgba(44,34,51,0.4); }
+  .rank-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 24px;
+  }
+  .type-pill {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 100px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .pill-image { background: rgba(91,188,170,0.15); color: var(--mint); border: 1px solid rgba(91,188,170,0.3); }
+  .pill-video { background: rgba(232,113,106,0.15); color: var(--rose); border: 1px solid rgba(232,113,106,0.3); }
+  .pill-carousel { background: rgba(212,168,83,0.15); color: var(--gold); border: 1px solid rgba(212,168,83,0.3); }
+  .metric-val { font-weight: 600; color: var(--text); }
+  .caption-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-muted); font-size: 0.78rem; }
+
+  /* ─── FUNNEL ─── */
+  .funnel-container { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem 0; }
+  .funnel-row {
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .funnel-label { width: 100px; font-size: 0.75rem; color: var(--text-muted); font-weight: 500; text-align: right; }
+  .funnel-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 32px; position: relative; overflow: hidden; }
+  .funnel-bar {
+    height: 100%;
+    border-radius: 4px;
+    display: flex; align-items: center; padding: 0 0.75rem;
+    font-size: 0.75rem; font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    transition: width 1s ease;
+  }
+  .funnel-pct { font-size: 0.7rem; color: var(--text-muted); width: 50px; text-align: right; }
+
+  /* ─── RECOMMENDATIONS ─── */
+  .reco-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .reco-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.4rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .reco-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3rem;
+    font-weight: 300;
+    color: var(--surface3);
+    position: absolute;
+    top: 0.5rem; right: 1rem;
+    line-height: 1;
+  }
+  .reco-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .reco-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+  .reco-card p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    text-align: center;
+    padding: 2rem 3rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 2rem;
+  }
+  .footer span { color: var(--rose); }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .grid-2, .grid-7-5, .grid-5-7 { grid-template-columns: 1fr; }
+    .reco-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .header { padding: 1.5rem; flex-direction: column; align-items: flex-start; gap: 1rem; }
+    .main { padding: 1rem 1.5rem; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .reco-grid { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-left">
+    <h1>Sugar Cosmetics<br><span>Instagram Analytics</span></h1>
+    <p>Jan 2024 – Apr 2025 &nbsp;·&nbsp; 200 Posts &nbsp;·&nbsp; Performance Dashboard</p>
+  </div>
+  <div class="header-badge">
+    <span class="badge badge-rose">📊 Tasks 1–10</span>
+    <span class="badge badge-gold">✦ GUVI | HCL Project</span>
+  </div>
+</header>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span class="filter-label">Post Type</span>
+  <div class="filter-group" id="type-filters">
+    <button class="filter-btn active" data-type="All">All</button>
+    <button class="filter-btn" data-type="Image">Image</button>
+    <button class="filter-btn" data-type="Video">Video</button>
+    <button class="filter-btn" data-type="Carousel">Carousel</button>
+  </div>
+  <div class="filter-sep"></div>
+  <span class="filter-label">Period</span>
+  <div class="filter-group" id="period-filters">
+    <button class="filter-btn active" data-period="All">All Time</button>
+    <button class="filter-btn" data-period="2024-H1">H1 2024</button>
+    <button class="filter-btn" data-period="2024-H2">H2 2024</button>
+    <button class="filter-btn" data-period="2025">2025</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TASK 1: KPI OVERVIEW -->
+  <div class="section-title">
+    <span class="task-badge">Task 1</span>
+    Brand KPI Overview
+  </div>
+  <div class="kpi-grid" id="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Posts</div>
+      <div class="kpi-value" id="kpi-posts">200</div>
+      <div class="kpi-sub">Jan 2024 – Apr 2025</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Likes</div>
+      <div class="kpi-value" id="kpi-likes">888.9K</div>
+      <div class="kpi-sub">Across all posts</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Comments</div>
+      <div class="kpi-value" id="kpi-comments">89.3K</div>
+      <div class="kpi-sub">User interactions</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Reach</div>
+      <div class="kpi-value" id="kpi-reach">11.0M</div>
+      <div class="kpi-sub">Unique accounts</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Impressions</div>
+      <div class="kpi-value" id="kpi-impressions">17.6M</div>
+      <div class="kpi-sub">Including repeat views</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Avg Engagement Rate</div>
+      <div class="kpi-value" id="kpi-eng">10.88%</div>
+      <div class="kpi-sub">Industry avg: ~1–3%</div>
+    </div>
+  </div>
+
+  <!-- TASK 2 + TASK 7 -->
+  <div class="grid-7-5">
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.5rem">
+        <span class="task-badge">Task 2</span> Monthly Posting Trend
+      </div>
+      <canvas id="monthlyChart" height="200"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.5rem">
+        <span class="task-badge">Task 7</span> Engagement Funnel
+      </div>
+      <div class="funnel-container" id="funnelContainer"></div>
+    </div>
+  </div>
+
+  <!-- TASK 5: POST TYPE + TASK 6: DAY OF WEEK -->
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.5rem">
+        <span class="task-badge">Task 5</span> Post Type Performance
+      </div>
+      <canvas id="typeChart" height="220"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.5rem">
+        <span class="task-badge">Task 6</span> Best Days to Post
+      </div>
+      <canvas id="dayChart" height="220"></canvas>
+    </div>
+  </div>
+
+  <!-- TASK 3 + TASK 4 -->
+  <div class="grid-2">
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.8rem">
+        <span class="task-badge">Task 3</span> Top 10 Posts by Likes
+      </div>
+      <table class="top-table" id="topLikesTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Caption</th><th>Type</th><th>Likes</th><th>Eng %</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.8rem">
+        <span class="task-badge">Task 4</span> Top 10 by Engagement Rate
+      </div>
+      <table class="top-table" id="topEngTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Caption</th><th>Type</th><th>Eng %</th><th>Likes</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TASK 8: HASHTAG ANALYSIS -->
+  <div class="grid-full">
+    <div class="chart-card">
+      <div class="section-title" style="margin-bottom:0.5rem">
+        <span class="task-badge">Task 8</span> Hashtag Theme Performance
+      </div>
+      <canvas id="hashtagChart" height="130"></canvas>
+    </div>
+  </div>
+
+  <!-- TASK 10: STRATEGIC RECOMMENDATIONS -->
+  <div class="section-title" style="margin-top:1rem">
+    <span class="task-badge">Task 10</span>
+    Strategic Recommendations
+  </div>
+  <div class="reco-grid">
+    <div class="reco-card">
+      <div class="reco-number">01</div>
+      <div class="reco-tag" style="background:rgba(232,113,106,0.12);color:var(--rose)">Content Format</div>
+      <h3>Double Down on Carousel &amp; Video</h3>
+      <p>Carousels drive a 13.4% avg engagement rate vs 9.0% for images — 49% higher. Reels/Videos achieve 6,400+ avg likes. Shift content mix to 40% Carousel, 35% Video, 25% Image.</p>
+    </div>
+    <div class="reco-card">
+      <div class="reco-number">02</div>
+      <div class="reco-tag" style="background:rgba(91,188,170,0.12);color:var(--mint)">Timing</div>
+      <h3>Post on Sundays &amp; Fridays</h3>
+      <p>Sunday delivers 12.2% avg engagement — the highest of any weekday. Friday follows at 11.5%. Schedule high-effort posts (new launches, tutorials) on these days for maximum reach.</p>
+    </div>
+    <div class="reco-card">
+      <div class="reco-number">03</div>
+      <div class="reco-tag" style="background:rgba(212,168,83,0.12);color:var(--gold)">Consistency</div>
+      <h3>Maintain 12–18 Posts Per Month</h3>
+      <p>Peak performance months (Jan, Feb, Jun–Aug) average 15–19 posts. Months with &lt;10 posts show growth stagnation. Build a content calendar to ensure steady cadence.</p>
+    </div>
+    <div class="reco-card">
+      <div class="reco-number">04</div>
+      <div class="reco-tag" style="background:rgba(155,127,200,0.12);color:var(--lavender)">Content Themes</div>
+      <h3>Lean into Festive &amp; Lip Content</h3>
+      <p>Festive Looks and Lip Shade hashtag clusters show highest avg engagement rates. Plan campaign bursts around Diwali (Oct–Nov) and Valentine's Day (Feb) with 3–4 weeks of dedicated content.</p>
+    </div>
+    <div class="reco-card">
+      <div class="reco-number">05</div>
+      <div class="reco-tag" style="background:rgba(201,118,138,0.12);color:var(--blush)">Growth</div>
+      <h3>Boost Saves with Tutorial Content</h3>
+      <p>Carousels have 2.6× more saves than images, indicating high reference value. Step-by-step makeup tutorials and "Get Ready With Me" carousel posts drive saves, which signal quality to the algorithm.</p>
+    </div>
+    <div class="reco-card">
+      <div class="reco-number">06</div>
+      <div class="reco-tag" style="background:rgba(91,188,170,0.12);color:var(--mint)">Virality</div>
+      <h3>Optimize for Shares with Bold Launches</h3>
+      <p>Shares (111K total) are the key virality driver. Posts announcing new collections or limited-edition launches get 2–3× average shares. Pair every launch with a shareable comparison reel.</p>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  Sugar Cosmetics · Instagram Performance Analytics Dashboard · <span>GUVI | HCL Capstone Project</span> · Jan 2024 – Apr 2025
+</footer>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+const ALL_DATA = [{"post_date":"2024-01-02","post_type":"Image","likes":3913,"comments":230,"shares":204,"saves":739,"reach":53178,"impressions":77187,"engagement_rate":9.56,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2024-01-05","post_type":"Video","likes":10627,"comments":344,"shares":822,"saves":862,"reach":88792,"impressions":190601,"engagement_rate":14.25,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Sunday vibes with our new nude palette 🌅"},{"post_date":"2024-01-06","post_type":"Video","likes":8207,"comments":621,"shares":1188,"saves":1282,"reach":72527,"impressions":154401,"engagement_rate":15.58,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-01-07","post_type":"Carousel","likes":6499,"comments":636,"shares":463,"saves":1638,"reach":58997,"impressions":97021,"engagement_rate":15.32,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-01-09","post_type":"Image","likes":3427,"comments":213,"shares":172,"saves":568,"reach":45893,"impressions":59924,"engagement_rate":9.57,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-01-10","post_type":"Image","likes":2239,"comments":138,"shares":99,"saves":441,"reach":36226,"impressions":42750,"engagement_rate":8.05,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-01-12","post_type":"Image","likes":4474,"comments":247,"shares":237,"saves":841,"reach":52177,"impressions":62834,"engagement_rate":10.94,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-01-13","post_type":"Image","likes":4040,"comments":218,"shares":189,"saves":638,"reach":56736,"impressions":73187,"engagement_rate":8.96,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2024-01-14","post_type":"Carousel","likes":5027,"comments":530,"shares":325,"saves":1262,"reach":59100,"impressions":88038,"engagement_rate":12.09,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-01-16","post_type":"Image","likes":3116,"comments":194,"shares":160,"saves":490,"reach":43267,"impressions":51280,"engagement_rate":9.17,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-01-17","post_type":"Carousel","likes":6107,"comments":621,"shares":474,"saves":1500,"reach":61261,"impressions":102715,"engagement_rate":14.25,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-01-18","post_type":"Image","likes":2781,"comments":169,"shares":128,"saves":440,"reach":38814,"impressions":48140,"engagement_rate":9.07,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-01-20","post_type":"Carousel","likes":7011,"comments":590,"shares":415,"saves":1634,"reach":70110,"impressions":110273,"engagement_rate":13.77,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-01-22","post_type":"Image","likes":2438,"comments":145,"shares":107,"saves":425,"reach":36882,"impressions":51193,"engagement_rate":8.43,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-01-25","post_type":"Video","likes":5948,"comments":444,"shares":622,"saves":727,"reach":61937,"impressions":116021,"engagement_rate":12.5,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-01-29","post_type":"Image","likes":2034,"comments":116,"shares":82,"saves":350,"reach":31309,"impressions":39197,"engagement_rate":8.23,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-02-01","post_type":"Image","likes":3050,"comments":184,"shares":149,"saves":531,"reach":41455,"impressions":55063,"engagement_rate":9.47,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-02-02","post_type":"Carousel","likes":5736,"comments":551,"shares":353,"saves":1520,"reach":54914,"impressions":89045,"engagement_rate":14.1,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-02-03","post_type":"Image","likes":3745,"comments":221,"shares":179,"saves":637,"reach":52451,"impressions":65564,"engagement_rate":9.11,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-02-04","post_type":"Video","likes":8700,"comments":669,"shares":1090,"saves":1131,"reach":77765,"impressions":162303,"engagement_rate":14.95,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-02-06","post_type":"Video","likes":8987,"comments":578,"shares":1068,"saves":994,"reach":74892,"impressions":161362,"engagement_rate":15.52,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-02-08","post_type":"Image","likes":5083,"comments":290,"shares":253,"saves":851,"reach":70595,"impressions":88244,"engagement_rate":9.18,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-02-09","post_type":"Carousel","likes":5413,"comments":534,"shares":371,"saves":1373,"reach":55247,"impressions":88617,"engagement_rate":13.26,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-02-10","post_type":"Image","likes":3600,"comments":209,"shares":166,"saves":596,"reach":48006,"impressions":64488,"engagement_rate":9.52,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-02-12","post_type":"Video","likes":6618,"comments":503,"shares":761,"saves":807,"reach":58751,"impressions":118677,"engagement_rate":14.13,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-02-13","post_type":"Carousel","likes":7716,"comments":694,"shares":524,"saves":2005,"reach":79346,"impressions":131942,"engagement_rate":13.76,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-02-14","post_type":"Video","likes":10946,"comments":799,"shares":1429,"saves":1346,"reach":94791,"impressions":203602,"engagement_rate":15.38,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-02-15","post_type":"Image","likes":3283,"comments":195,"shares":152,"saves":581,"reach":44898,"impressions":56122,"engagement_rate":9.39,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-02-16","post_type":"Carousel","likes":6355,"comments":628,"shares":448,"saves":1724,"reach":67027,"impressions":114346,"engagement_rate":13.65,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-02-17","post_type":"Image","likes":2591,"comments":156,"shares":116,"saves":449,"reach":39861,"impressions":52814,"engagement_rate":8.31,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-02-19","post_type":"Video","likes":5524,"comments":391,"shares":551,"saves":587,"reach":51613,"impressions":108382,"engagement_rate":12.87,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-02-23","post_type":"Image","likes":2716,"comments":151,"shares":120,"saves":470,"reach":38797,"impressions":52818,"engagement_rate":9.43,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-02-27","post_type":"Image","likes":4165,"comments":240,"shares":199,"saves":713,"reach":55532,"impressions":72748,"engagement_rate":9.58,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-03-02","post_type":"Image","likes":2200,"comments":131,"shares":96,"saves":394,"reach":33868,"impressions":44157,"engagement_rate":8.35,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-03-04","post_type":"Carousel","likes":5189,"comments":509,"shares":332,"saves":1362,"reach":54516,"impressions":91044,"engagement_rate":13.57,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-03-08","post_type":"Video","likes":5064,"comments":380,"shares":534,"saves":568,"reach":47755,"impressions":90153,"engagement_rate":13.74,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-03-12","post_type":"Image","likes":3046,"comments":175,"shares":138,"saves":530,"reach":43511,"impressions":56808,"engagement_rate":9.17,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-03-14","post_type":"Image","likes":4197,"comments":244,"shares":205,"saves":736,"reach":56499,"impressions":73449,"engagement_rate":9.53,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Your go-to blush for the perfect flush 🌹"},{"post_date":"2024-03-17","post_type":"Image","likes":2421,"comments":148,"shares":107,"saves":424,"reach":36315,"impressions":47573,"engagement_rate":8.56,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-03-23","post_type":"Carousel","likes":9253,"comments":839,"shares":588,"saves":2271,"reach":89374,"impressions":140218,"engagement_rate":14.52,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-03-25","post_type":"Image","likes":2651,"comments":154,"shares":117,"saves":466,"reach":39253,"impressions":55154,"engagement_rate":8.63,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-03-28","post_type":"Carousel","likes":6461,"comments":640,"shares":456,"saves":1629,"reach":68538,"impressions":108491,"engagement_rate":13.39,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-04-03","post_type":"Image","likes":3344,"comments":198,"shares":159,"saves":582,"reach":47775,"impressions":65002,"engagement_rate":8.98,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-04-06","post_type":"Video","likes":7434,"comments":558,"shares":876,"saves":893,"reach":66157,"impressions":140595,"engagement_rate":14.0,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-04-07","post_type":"Image","likes":2597,"comments":154,"shares":114,"saves":458,"reach":38920,"impressions":52151,"engagement_rate":8.54,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-04-10","post_type":"Carousel","likes":5742,"comments":563,"shares":380,"saves":1484,"reach":59613,"impressions":95980,"engagement_rate":13.35,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-04-13","post_type":"Image","likes":4375,"comments":253,"shares":215,"saves":762,"reach":58745,"impressions":76369,"engagement_rate":9.52,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-04-16","post_type":"Carousel","likes":4871,"comments":492,"shares":319,"saves":1273,"reach":52282,"impressions":84574,"engagement_rate":13.29,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-04-18","post_type":"Image","likes":3102,"comments":183,"shares":144,"saves":541,"reach":44310,"impressions":57159,"engagement_rate":9.0,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-04-22","post_type":"Video","likes":4832,"comments":363,"shares":509,"saves":545,"reach":45605,"impressions":95768,"engagement_rate":13.73,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-04-25","post_type":"Image","likes":2434,"comments":146,"shares":107,"saves":428,"reach":36557,"impressions":51907,"engagement_rate":8.53,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-04-28","post_type":"Carousel","likes":5038,"comments":507,"shares":333,"saves":1311,"reach":52477,"impressions":83427,"engagement_rate":13.71,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-05-05","post_type":"Image","likes":2861,"comments":168,"shares":131,"saves":504,"reach":41010,"impressions":55775,"engagement_rate":8.92,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-05-10","post_type":"Carousel","likes":6208,"comments":608,"shares":417,"saves":1590,"reach":63350,"impressions":101741,"engagement_rate":13.6,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-05-15","post_type":"Image","likes":3484,"comments":207,"shares":162,"saves":597,"reach":47979,"impressions":62756,"engagement_rate":9.28,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-05-21","post_type":"Video","likes":8044,"comments":601,"shares":979,"saves":993,"reach":68834,"impressions":150107,"engagement_rate":15.42,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-05-27","post_type":"Image","likes":4028,"comments":231,"shares":195,"saves":681,"reach":54442,"impressions":71981,"engagement_rate":9.42,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Cruelty-free and proud! 🐰💚"},{"post_date":"2024-05-30","post_type":"Carousel","likes":4677,"comments":469,"shares":310,"saves":1210,"reach":48522,"impressions":77478,"engagement_rate":13.73,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-06-02","post_type":"Image","likes":2703,"comments":159,"shares":123,"saves":477,"reach":39764,"impressions":51099,"engagement_rate":8.71,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2024-06-04","post_type":"Video","likes":6049,"comments":451,"shares":695,"saves":705,"reach":55261,"impressions":112081,"engagement_rate":14.3,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-06-06","post_type":"Carousel","likes":8136,"comments":771,"shares":534,"saves":2022,"reach":79564,"impressions":137993,"engagement_rate":14.41,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-06-09","post_type":"Image","likes":3836,"comments":223,"shares":180,"saves":654,"reach":52544,"impressions":69037,"engagement_rate":9.29,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-06-11","post_type":"Image","likes":4099,"comments":239,"shares":200,"saves":706,"reach":55403,"impressions":71956,"engagement_rate":9.44,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-06-13","post_type":"Video","likes":7684,"comments":578,"shares":902,"saves":944,"reach":67879,"impressions":147764,"engagement_rate":14.9,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-06-17","post_type":"Carousel","likes":6024,"comments":591,"shares":400,"saves":1551,"reach":60601,"impressions":98779,"engagement_rate":13.78,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-06-18","post_type":"Image","likes":3159,"comments":188,"shares":148,"saves":555,"reach":45127,"impressions":60420,"engagement_rate":8.99,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-06-20","post_type":"Carousel","likes":5441,"comments":543,"shares":362,"saves":1388,"reach":56266,"impressions":89382,"engagement_rate":13.33,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-06-22","post_type":"Image","likes":3576,"comments":213,"shares":169,"saves":617,"reach":49945,"impressions":66434,"engagement_rate":9.16,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-06-24","post_type":"Video","likes":4683,"comments":349,"shares":501,"saves":537,"reach":44133,"impressions":91395,"engagement_rate":13.76,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-06-26","post_type":"Image","likes":3258,"comments":192,"shares":152,"saves":566,"reach":46121,"impressions":60539,"engagement_rate":9.04,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-06-29","post_type":"Video","likes":6812,"comments":513,"shares":796,"saves":828,"reach":61000,"impressions":123629,"engagement_rate":14.67,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-07-03","post_type":"Image","likes":3497,"comments":208,"shares":162,"saves":607,"reach":48846,"impressions":65935,"engagement_rate":9.16,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Your go-to blush for the perfect flush 🌹"},{"post_date":"2024-07-05","post_type":"Image","likes":2462,"comments":147,"shares":107,"saves":440,"reach":37280,"impressions":47833,"engagement_rate":8.48,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2024-07-07","post_type":"Carousel","likes":7268,"comments":710,"shares":490,"saves":1840,"reach":72680,"impressions":117538,"engagement_rate":14.15,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-07-09","post_type":"Video","likes":10001,"comments":771,"shares":1265,"saves":1200,"reach":85720,"impressions":190146,"engagement_rate":15.45,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-07-11","post_type":"Image","likes":3821,"comments":224,"shares":178,"saves":651,"reach":52350,"impressions":67009,"engagement_rate":9.31,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-07-13","post_type":"Carousel","likes":5956,"comments":584,"shares":395,"saves":1528,"reach":60154,"impressions":97449,"engagement_rate":13.93,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-07-16","post_type":"Image","likes":3120,"comments":185,"shares":145,"saves":542,"reach":44571,"impressions":57695,"engagement_rate":8.97,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-07-18","post_type":"Video","likes":5427,"comments":401,"shares":581,"saves":615,"reach":50028,"impressions":99556,"engagement_rate":14.04,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-07-20","post_type":"Image","likes":2744,"comments":164,"shares":121,"saves":479,"reach":39199,"impressions":52816,"engagement_rate":9.0,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-07-22","post_type":"Carousel","likes":6591,"comments":645,"shares":441,"saves":1706,"reach":66060,"impressions":104715,"engagement_rate":13.9,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-07-25","post_type":"Image","likes":4020,"comments":234,"shares":192,"saves":691,"reach":54324,"impressions":72485,"engagement_rate":9.42,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-07-27","post_type":"Carousel","likes":5218,"comments":516,"shares":346,"saves":1337,"reach":53528,"impressions":86482,"engagement_rate":13.86,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-07-29","post_type":"Video","likes":7218,"comments":543,"shares":849,"saves":877,"reach":63807,"impressions":138578,"engagement_rate":14.94,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-07-31","post_type":"Image","likes":2583,"comments":154,"shares":114,"saves":453,"reach":38960,"impressions":50648,"engagement_rate":8.47,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-08-03","post_type":"Image","likes":3703,"comments":218,"shares":173,"saves":636,"reach":51140,"impressions":69037,"engagement_rate":9.26,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2024-08-05","post_type":"Carousel","likes":6884,"comments":671,"shares":456,"saves":1755,"reach":68840,"impressions":116627,"engagement_rate":13.93,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-08-08","post_type":"Video","likes":9421,"comments":729,"shares":1178,"saves":1141,"reach":80596,"impressions":173682,"engagement_rate":15.58,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-08-10","post_type":"Image","likes":3286,"comments":194,"shares":153,"saves":568,"reach":46083,"impressions":59067,"engagement_rate":9.12,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-08-12","post_type":"Image","likes":3055,"comments":181,"shares":141,"saves":532,"reach":43643,"impressions":57714,"engagement_rate":9.0,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Cruelty-free and proud! 🐰💚"},{"post_date":"2024-08-15","post_type":"Video","likes":7951,"comments":601,"shares":942,"saves":966,"reach":70027,"impressions":154060,"engagement_rate":14.94,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-08-18","post_type":"Carousel","likes":5583,"comments":546,"shares":370,"saves":1446,"reach":57518,"impressions":92309,"engagement_rate":13.82,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-08-21","post_type":"Image","likes":2890,"comments":172,"shares":128,"saves":505,"reach":41284,"impressions":55738,"engagement_rate":8.96,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Your go-to blush for the perfect flush 🌹"},{"post_date":"2024-08-23","post_type":"Carousel","likes":6279,"comments":614,"shares":418,"saves":1605,"reach":62990,"impressions":101906,"engagement_rate":13.84,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-08-26","post_type":"Image","likes":4241,"comments":248,"shares":204,"saves":730,"reach":57174,"impressions":73139,"engagement_rate":9.49,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-08-28","post_type":"Video","likes":5810,"comments":434,"shares":644,"saves":667,"reach":53127,"impressions":110905,"engagement_rate":13.85,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Get ready with me for the big day 👰"},{"post_date":"2024-08-31","post_type":"Image","likes":2434,"comments":145,"shares":108,"saves":430,"reach":36881,"impressions":48046,"engagement_rate":8.43,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-09-03","post_type":"Image","likes":3586,"comments":212,"shares":167,"saves":618,"reach":49459,"impressions":67566,"engagement_rate":9.26,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Morning routine essentials ft. Sugar Cosmetics ☕"},{"post_date":"2024-09-06","post_type":"Carousel","likes":5810,"comments":571,"shares":388,"saves":1492,"reach":59285,"impressions":97129,"engagement_rate":13.59,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-09-08","post_type":"Video","likes":8722,"comments":668,"shares":1047,"saves":1076,"reach":74956,"impressions":163580,"engagement_rate":15.36,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-09-10","post_type":"Image","likes":2733,"comments":162,"shares":127,"saves":479,"reach":39611,"impressions":51495,"engagement_rate":8.84,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-09-13","post_type":"Carousel","likes":6703,"comments":654,"shares":447,"saves":1719,"reach":67030,"impressions":108829,"engagement_rate":13.46,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-09-16","post_type":"Image","likes":3979,"comments":232,"shares":186,"saves":682,"reach":53774,"impressions":71770,"engagement_rate":9.42,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Sweatproof, waterproof, all-day proof! 💪"},{"post_date":"2024-09-19","post_type":"Image","likes":2598,"comments":155,"shares":115,"saves":455,"reach":38773,"impressions":51567,"engagement_rate":8.58,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-09-23","post_type":"Video","likes":7089,"comments":531,"shares":831,"saves":859,"reach":62474,"impressions":133793,"engagement_rate":14.9,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-09-26","post_type":"Image","likes":3355,"comments":198,"shares":157,"saves":582,"reach":47218,"impressions":63144,"engagement_rate":9.09,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-09-28","post_type":"Carousel","likes":5128,"comments":507,"shares":341,"saves":1317,"reach":52531,"impressions":85503,"engagement_rate":13.89,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Your go-to blush for the perfect flush 🌹"},{"post_date":"2024-09-30","post_type":"Image","likes":3824,"comments":226,"shares":178,"saves":657,"reach":51675,"impressions":68977,"engagement_rate":9.41,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"The lash game is STRONG with this one 😍"},{"post_date":"2024-10-02","post_type":"Video","likes":9624,"comments":741,"shares":1196,"saves":1152,"reach":82489,"impressions":182318,"engagement_rate":15.41,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Festive season is here — time to shine! 🎉💄"},{"post_date":"2024-10-04","post_type":"Carousel","likes":10258,"comments":942,"shares":672,"saves":2537,"reach":87806,"impressions":143602,"engagement_rate":16.44,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Limited edition festive kit — grab yours now! 🎊"},{"post_date":"2024-10-07","post_type":"Image","likes":4879,"comments":282,"shares":233,"saves":820,"reach":64989,"impressions":87786,"engagement_rate":9.56,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-10-11","post_type":"Carousel","likes":8143,"comments":791,"shares":545,"saves":2008,"reach":84009,"impressions":138055,"engagement_rate":13.91,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-10-16","post_type":"Image","likes":4225,"comments":243,"shares":204,"saves":726,"reach":57100,"impressions":76915,"engagement_rate":9.46,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-10-20","post_type":"Video","likes":12354,"comments":954,"shares":1522,"saves":1458,"reach":105984,"impressions":235687,"engagement_rate":15.37,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Diwali glow is here! ✨🪔💄"},{"post_date":"2024-10-23","post_type":"Image","likes":5152,"comments":295,"shares":248,"saves":871,"reach":68696,"impressions":93430,"engagement_rate":9.52,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Festive season is here — time to shine! 🎉💄"},{"post_date":"2024-10-27","post_type":"Video","likes":8810,"comments":679,"shares":1073,"saves":1065,"reach":75498,"impressions":165544,"engagement_rate":15.39,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-10-29","post_type":"Carousel","likes":7293,"comments":714,"shares":494,"saves":1815,"reach":75098,"impressions":127666,"engagement_rate":13.73,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-10-31","post_type":"Image","likes":5505,"comments":316,"shares":264,"saves":923,"reach":73345,"impressions":100483,"engagement_rate":9.56,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Halloween glam! 🎃 Go bold or go home"},{"post_date":"2024-11-02","post_type":"Carousel","likes":8507,"comments":820,"shares":566,"saves":2115,"reach":87994,"impressions":144911,"engagement_rate":13.65,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-11-04","post_type":"Video","likes":10478,"comments":807,"shares":1299,"saves":1246,"reach":89867,"impressions":201198,"engagement_rate":15.42,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Festive season is here — time to shine! 🎉💄"},{"post_date":"2024-11-06","post_type":"Image","likes":4624,"comments":267,"shares":223,"saves":782,"reach":61659,"impressions":83237,"engagement_rate":9.58,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Collab alert! Check out this stunning look 💫"},{"post_date":"2024-11-09","post_type":"Carousel","likes":9876,"comments":926,"shares":645,"saves":2481,"reach":99759,"impressions":163244,"engagement_rate":13.96,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Get ready for the festive weekend! 🎊"},{"post_date":"2024-11-12","post_type":"Image","likes":5085,"comments":292,"shares":245,"saves":860,"reach":67795,"impressions":92026,"engagement_rate":9.54,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"New in: Our bestselling eyeliner just got better! 👁️🖤"},{"post_date":"2024-11-14","post_type":"Video","likes":9065,"comments":697,"shares":1116,"saves":1094,"reach":77716,"impressions":172025,"engagement_rate":15.36,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Bold, bright, beautiful — just like you 💕"},{"post_date":"2024-11-17","post_type":"Image","likes":4093,"comments":237,"shares":197,"saves":705,"reach":54574,"impressions":74722,"engagement_rate":9.56,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Because you deserve to glow every single day ✨"},{"post_date":"2024-11-20","post_type":"Carousel","likes":7650,"comments":748,"shares":513,"saves":1912,"reach":78866,"impressions":129632,"engagement_rate":13.73,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Swipe right for the ultimate bold lip look 💄✨"},{"post_date":"2024-11-23","post_type":"Image","likes":3685,"comments":215,"shares":177,"saves":638,"reach":49662,"impressions":67345,"engagement_rate":9.47,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-11-26","post_type":"Video","likes":8238,"comments":634,"shares":993,"saves":1001,"reach":70803,"impressions":154047,"engagement_rate":15.3,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Get the dewy glow look in 5 easy steps ☀️"},{"post_date":"2024-11-28","post_type":"Image","likes":5220,"comments":299,"shares":250,"saves":875,"reach":69598,"impressions":94451,"engagement_rate":9.5,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Turkey day glam! 🦃✨ Your festive look sorted"},{"post_date":"2024-11-30","post_type":"Carousel","likes":7238,"comments":708,"shares":487,"saves":1820,"reach":74258,"impressions":121303,"engagement_rate":13.81,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Introducing our new highlighter collection ✨🌟"},{"post_date":"2024-12-02","post_type":"Video","likes":10862,"comments":835,"shares":1343,"saves":1288,"reach":92790,"impressions":207211,"engagement_rate":15.44,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Holiday glam starts here 🎄✨💄"},{"post_date":"2024-12-05","post_type":"Image","likes":5399,"comments":309,"shares":258,"saves":905,"reach":71975,"impressions":97167,"engagement_rate":9.54,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"New shade drop: which one is your favorite? 💋"},{"post_date":"2024-12-07","post_type":"Carousel","likes":11083,"comments":1025,"shares":724,"saves":2759,"reach":112177,"impressions":183730,"engagement_rate":13.9,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"12 Days of Glam — Day 1 🎁✨"},{"post_date":"2024-12-09","post_type":"Image","likes":5851,"comments":334,"shares":280,"saves":982,"reach":77970,"impressions":104988,"engagement_rate":9.55,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"The holidays called — they want your best look 🎅"},{"post_date":"2024-12-11","post_type":"Video","likes":13497,"comments":1047,"shares":1663,"saves":1590,"reach":115769,"impressions":256610,"engagement_rate":15.39,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"New Year New Glam 🎆💄"},{"post_date":"2024-12-14","post_type":"Carousel","likes":9540,"comments":908,"shares":631,"saves":2378,"reach":97340,"impressions":159478,"engagement_rate":13.84,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Gift set alert! The perfect beauty present 🎁"},{"post_date":"2024-12-16","post_type":"Image","likes":6112,"comments":349,"shares":294,"saves":1026,"reach":81461,"impressions":110372,"engagement_rate":9.56,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Party season has arrived! 🎉 Are you ready?"},{"post_date":"2024-12-18","post_type":"Image","likes":6296,"comments":359,"shares":302,"saves":1056,"reach":83962,"impressions":115005,"engagement_rate":9.54,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Winter wonderland makeup look ❄️✨"},{"post_date":"2024-12-20","post_type":"Video","likes":11280,"comments":870,"shares":1392,"saves":1334,"reach":96692,"impressions":210548,"engagement_rate":15.4,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Christmas Eve look — 5 min glam ⭐🎄"},{"post_date":"2024-12-22","post_type":"Carousel","likes":8867,"comments":850,"shares":589,"saves":2213,"reach":91002,"impressions":148836,"engagement_rate":13.76,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Your holiday makeup guide is here 🎄"},{"post_date":"2024-12-24","post_type":"Image","likes":5702,"comments":326,"shares":274,"saves":957,"reach":76024,"impressions":103553,"engagement_rate":9.54,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Merry Christmas & Happy Glam-mas! 🎅💄"},{"post_date":"2024-12-27","post_type":"Video","likes":7598,"comments":578,"shares":918,"saves":941,"reach":66059,"impressions":140066,"engagement_rate":14.44,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"NYE prep starts NOW 🥂✨"},{"post_date":"2024-12-29","post_type":"Carousel","likes":10428,"comments":981,"shares":684,"saves":2598,"reach":106417,"impressions":172155,"engagement_rate":13.79,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"New Year's Eve ultimate glam guide 🥂🎆"},{"post_date":"2024-12-31","post_type":"Image","likes":6648,"comments":379,"shares":319,"saves":1116,"reach":88640,"impressions":119882,"engagement_rate":9.55,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Goodbye 2024, hello glam 2025! 💄🎉"},{"post_date":"2025-01-04","post_type":"Image","likes":3648,"comments":217,"shares":170,"saves":629,"reach":50166,"impressions":66220,"engagement_rate":9.28,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"New Year, New Lip Color 💋✨"},{"post_date":"2025-01-08","post_type":"Carousel","likes":5875,"comments":578,"shares":392,"saves":1506,"reach":59347,"impressions":97132,"engagement_rate":13.67,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"2025 Makeup Trends — your guide is here!"},{"post_date":"2025-01-12","post_type":"Video","likes":7534,"comments":569,"shares":878,"saves":900,"reach":64866,"impressions":139064,"engagement_rate":14.93,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"New year, same bold you 💪💄"},{"post_date":"2025-01-15","post_type":"Image","likes":3259,"comments":193,"shares":152,"saves":565,"reach":44806,"impressions":59787,"engagement_rate":9.32,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"January glow-up challenge ✨"},{"post_date":"2025-01-19","post_type":"Carousel","likes":5128,"comments":505,"shares":341,"saves":1313,"reach":51749,"impressions":84142,"engagement_rate":13.96,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Reds are forever 💋 New collection drop!"},{"post_date":"2025-01-22","post_type":"Image","likes":2985,"comments":178,"shares":139,"saves":521,"reach":41591,"impressions":54068,"engagement_rate":9.19,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Tutorial: Get the perfect no-makeup makeup look 🌸"},{"post_date":"2025-01-25","post_type":"Video","likes":6834,"comments":514,"shares":799,"saves":820,"reach":59085,"impressions":126562,"engagement_rate":14.31,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Winter makeup must-haves 2025 ❄️"},{"post_date":"2025-01-28","post_type":"Image","likes":3044,"comments":181,"shares":142,"saves":533,"reach":42985,"impressions":56342,"engagement_rate":9.07,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Nail the look with our new collection 💅"},{"post_date":"2025-01-30","post_type":"Carousel","likes":5467,"comments":538,"shares":365,"saves":1397,"reach":55115,"impressions":89237,"engagement_rate":13.92,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Flawless skin, always 💫"},{"post_date":"2025-02-02","post_type":"Video","likes":9836,"comments":758,"shares":1217,"saves":1165,"reach":84486,"impressions":185869,"engagement_rate":15.24,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Valentine's Day glam is here 💕"},{"post_date":"2025-02-06","post_type":"Image","likes":4838,"comments":277,"shares":231,"saves":811,"reach":64506,"impressions":86758,"engagement_rate":9.54,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Love is in the air 💕 And so is Sugar 💄"},{"post_date":"2025-02-09","post_type":"Carousel","likes":7126,"comments":697,"shares":480,"saves":1817,"reach":73121,"impressions":119617,"engagement_rate":13.82,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"V-Day gifts she'll actually love 💝"},{"post_date":"2025-02-12","post_type":"Image","likes":3721,"comments":220,"shares":174,"saves":643,"reach":51008,"impressions":67233,"engagement_rate":9.33,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Date night look — done in 10 minutes 💋"},{"post_date":"2025-02-14","post_type":"Video","likes":12076,"comments":931,"shares":1490,"saves":1428,"reach":103719,"impressions":228183,"engagement_rate":15.34,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"Happy Valentine's Day! 💕 Show us your look 💄"},{"post_date":"2025-02-18","post_type":"Image","likes":3215,"comments":192,"shares":149,"saves":557,"reach":44228,"impressions":58383,"engagement_rate":9.3,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"The glow-up continues ✨"},{"post_date":"2025-02-22","post_type":"Carousel","likes":6445,"comments":633,"shares":432,"saves":1646,"reach":65760,"impressions":107538,"engagement_rate":13.62,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Spring makeup trends preview 🌸"},{"post_date":"2025-02-26","post_type":"Image","likes":2816,"comments":167,"shares":131,"saves":491,"reach":40231,"impressions":52701,"engagement_rate":8.96,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Spring is coming — are your nails ready? 🌸"},{"post_date":"2025-03-03","post_type":"Image","likes":3421,"comments":204,"shares":159,"saves":592,"reach":47016,"impressions":62131,"engagement_rate":9.31,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"March into bold 💋"},{"post_date":"2025-03-08","post_type":"Video","likes":11148,"comments":862,"shares":1376,"saves":1320,"reach":95720,"impressions":209585,"engagement_rate":15.42,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Happy Women's Day! 💪 Empowered & Glam 🌹"},{"post_date":"2025-03-14","post_type":"Carousel","likes":6103,"comments":600,"shares":409,"saves":1560,"reach":62087,"impressions":101282,"engagement_rate":13.8,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Spring collection is HERE 🌸✨"},{"post_date":"2025-03-19","post_type":"Image","likes":3109,"comments":186,"shares":145,"saves":542,"reach":43247,"impressions":56221,"engagement_rate":9.19,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Rosy cheeks, happy heart 🌹"},{"post_date":"2025-03-24","post_type":"Carousel","likes":5742,"comments":566,"shares":385,"saves":1472,"reach":58580,"impressions":95605,"engagement_rate":13.59,"hashtags":"#SugarCosmetics #SkincareFirst #PrimerTime #LongLastingMakeup #StayPut","caption":"Your spring makeup prep guide 🌸"},{"post_date":"2025-03-28","post_type":"Image","likes":3782,"comments":226,"shares":176,"saves":652,"reach":52131,"impressions":69294,"engagement_rate":9.27,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"Glow through spring ✨☀️"},{"post_date":"2025-03-31","post_type":"Video","likes":6789,"comments":509,"shares":789,"saves":809,"reach":58685,"impressions":124071,"engagement_rate":14.06,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Spring GRWM ft. our new palette 🌸"},{"post_date":"2025-04-04","post_type":"Image","likes":3549,"comments":212,"shares":165,"saves":613,"reach":48992,"impressions":64950,"engagement_rate":9.27,"hashtags":"#SugarCosmetics #MascaraMagic #LashGoals #BigLashes #EyeLove","caption":"Lashes that stop traffic 😍"},{"post_date":"2025-04-08","post_type":"Carousel","likes":6277,"comments":617,"shares":420,"saves":1608,"reach":63908,"impressions":104526,"engagement_rate":13.64,"hashtags":"#SugarCosmetics #BoldLips #NudeShades #PoutPerfect #MakeupArtist","caption":"10 lip shades for every spring look 💋"},{"post_date":"2025-04-12","post_type":"Video","likes":8567,"comments":661,"shares":1037,"saves":1023,"reach":73672,"impressions":161078,"engagement_rate":15.35,"hashtags":"#SugarCosmetics #GlitterEyes #FestiveMakeup #PartyLook #NightOut","caption":"Holi-inspired glam — colour me bold 🌈"},{"post_date":"2025-04-17","post_type":"Image","likes":4109,"comments":241,"shares":195,"saves":709,"reach":55583,"impressions":74531,"engagement_rate":9.28,"hashtags":"#SugarCosmetics #FoundationFinish #FlawlessSkin #MakeupTutorial #BeautyTips","caption":"Summer-proof your makeup 🌞"},{"post_date":"2025-04-22","post_type":"Image","likes":2785,"comments":166,"shares":130,"saves":487,"reach":39929,"impressions":53898,"engagement_rate":8.93,"hashtags":"#SugarCosmetics #NailArt #ManicureMonday #ColorPop #FunNails","caption":"Pop of colour for your summer nails! 💅"},{"post_date":"2025-04-25","post_type":"Carousel","likes":5523,"comments":545,"shares":370,"saves":1417,"reach":56156,"impressions":91134,"engagement_rate":13.67,"hashtags":"#SugarCosmetics #HighlighterGlow #StrobeLife #GlowUp #ShimmerAndShine","caption":"The dewy summer skin guide ☀️"},{"post_date":"2025-04-28","post_type":"Image","likes":3382,"comments":202,"shares":158,"saves":587,"reach":46779,"impressions":62596,"engagement_rate":9.24,"hashtags":"#SugarCosmetics #BlusherBae #RosyGlow #CheekColor #NaturalGlow","caption":"Summer blush is non-negotiable 🌸"},{"post_date":"2025-04-30","post_type":"Video","likes":7245,"comments":545,"shares":852,"saves":876,"reach":63155,"impressions":136493,"engagement_rate":14.88,"hashtags":"#SugarCosmetics #EyeMakeup #EyelinerGoals #BeautyBlogger #MakeupOfTheDay","caption":"Last day of April — make it count 💄"}];
+
+// ─── ANALYTICS COMPUTED ─────────────────────────────────
+const MONTHLY_LABELS = ['Jan 2024','Feb 2024','Mar 2024','Apr 2024','May 2024','Jun 2024','Jul 2024','Aug 2024','Sep 2024','Oct 2024','Nov 2024','Dec 2024','Jan 2025','Feb 2025','Mar 2025','Apr 2025'];
+const MONTHLY_POSTS = [16,19,10,12,7,16,16,13,13,10,16,18,10,8,7,9];
+const TYPE_STATS = {
+  'Image': {count:95,avg_likes:2824,avg_comments:244,avg_saves:477,avg_shares:153,avg_eng:9.02,avg_reach:38760},
+  'Video': {count:52,avg_likes:6401,avg_comments:651,avg_saves:990,avg_shares:775,avg_eng:11.73,avg_reach:55082},
+  'Carousel': {count:53,avg_likes:5426,avg_comments:607,avg_saves:1263,avg_shares:408,avg_eng:13.37,avg_reach:55982}
+};
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_ENG = [10.88,10.76,10.79,9.89,11.53,10.31,12.18];
+const DAY_LIKES = [4400,4200,4300,3900,4600,4200,5100];
+const FUNNEL = {
+  labels:['Impressions','Reach','Likes','Comments','Shares','Saves'],
+  values:[17640992,11023900,888882,89316,111087,163876]
+};
+const HASHTAG_THEMES = ['Blush & Glow','Eye Makeup','Long-Lasting','Lip Shades','General','Highlighter','Foundation','Mascara','Nail Art','Festive Looks'];
+const HASHTAG_ENG = [9.18,13.7,9.36,13.55,9.22,9.45,9.3,9.5,9.39,14.62];
+const HASHTAG_REACH = [46820,63950,41370,63110,42750,43760,41960,45180,43540,88720];
+
+// ─── COLORS ─────────────────────────────────────────────
+const COLORS = {
+  rose: '#E8716A', gold: '#D4A853', blush: '#C9768A',
+  mint: '#5BBCAA', lavender: '#9B7FC8', teal: '#4CAAB0',
+  pink2: '#E88FA0', amber: '#C9983A'
+};
+const CHART_DEFAULTS = {
+  color: '#9B8FA5',
+  plugins: { legend: { labels: { color: '#9B8FA5', font: { family: "'DM Sans', sans-serif", size: 11 } } } },
+  scales: {
+    x: { ticks: { color: '#5C4F65', font: { size: 10 } }, grid: { color: '#2E2438' }, border: { color: '#2E2438' } },
+    y: { ticks: { color: '#5C4F65', font: { size: 10 } }, grid: { color: '#2E2438' }, border: { color: '#2E2438' } }
+  }
+};
+
+// ─── FILTER STATE ───────────────────────────────────────
+let activeType = 'All', activePeriod = 'All';
+
+function getFiltered() {
+  return ALL_DATA.filter(r => {
+    const typeOk = activeType === 'All' || r.post_type === activeType;
+    let periodOk = true;
+    if (activePeriod === '2024-H1') periodOk = r.post_date >= '2024-01-01' && r.post_date <= '2024-06-30';
+    else if (activePeriod === '2024-H2') periodOk = r.post_date >= '2024-07-01' && r.post_date <= '2024-12-31';
+    else if (activePeriod === '2025') periodOk = r.post_date >= '2025-01-01';
+    return typeOk && periodOk;
+  });
+}
+
+function fmt(n) {
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1000) return (n/1000).toFixed(1)+'K';
+  return n.toString();
+}
+
+// ─── UPDATE KPIs ─────────────────────────────────────────
+function updateKPIs(data) {
+  document.getElementById('kpi-posts').textContent = data.length;
+  document.getElementById('kpi-likes').textContent = fmt(data.reduce((a,r)=>a+r.likes,0));
+  document.getElementById('kpi-comments').textContent = fmt(data.reduce((a,r)=>a+r.comments,0));
+  document.getElementById('kpi-reach').textContent = fmt(data.reduce((a,r)=>a+r.reach,0));
+  document.getElementById('kpi-impressions').textContent = fmt(data.reduce((a,r)=>a+r.impressions,0));
+  const avgEng = data.length ? (data.reduce((a,r)=>a+r.engagement_rate,0)/data.length).toFixed(2) : 0;
+  document.getElementById('kpi-eng').textContent = avgEng+'%';
+}
+
+// ─── CHART INSTANCES ────────────────────────────────────
+let charts = {};
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// ─── MONTHLY CHART ───────────────────────────────────────
+function buildMonthlyChart(data) {
+  destroyChart('monthly');
+  const monthly = {};
+  MONTHLY_LABELS.forEach(l => monthly[l] = 0);
+  data.forEach(r => {
+    const d = new Date(r.post_date);
+    const label = d.toLocaleDateString('en-US', {month:'short',year:'numeric'});
+    if (monthly.hasOwnProperty(label)) monthly[label]++;
+  });
+  const ctx = document.getElementById('monthlyChart').getContext('2d');
+  charts.monthly = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: MONTHLY_LABELS,
+      datasets: [{
+        label: 'Posts',
+        data: MONTHLY_LABELS.map(l => monthly[l]),
+        borderColor: COLORS.rose,
+        backgroundColor: 'rgba(232,113,106,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: COLORS.rose,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: '#221B26', titleColor: '#F2E8F0', bodyColor: '#9B8FA5', borderColor: '#2E2438', borderWidth: 1 } },
+      scales: {
+        x: { ticks: { color: '#5C4F65', maxRotation: 45, font: { size: 9 } }, grid: { color: '#1E1822' } },
+        y: { ticks: { color: '#5C4F65', stepSize: 2 }, grid: { color: '#1E1822' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ─── FUNNEL ──────────────────────────────────────────────
+function buildFunnel(data) {
+  const totals = {
+    Impressions: data.reduce((a,r)=>a+r.impressions,0),
+    Reach: data.reduce((a,r)=>a+r.reach,0),
+    Likes: data.reduce((a,r)=>a+r.likes,0),
+    Comments: data.reduce((a,r)=>a+r.comments,0),
+    Shares: data.reduce((a,r)=>a+r.shares,0),
+    Saves: data.reduce((a,r)=>a+r.saves,0)
+  };
+  const colors = [COLORS.rose, COLORS.blush, COLORS.gold, COLORS.mint, COLORS.lavender, COLORS.teal];
+  const max = totals.Impressions;
+  const container = document.getElementById('funnelContainer');
+  container.innerHTML = '';
+  Object.entries(totals).forEach(([label, val], i) => {
+    const pct = ((val/max)*100).toFixed(1);
+    const barW = Math.max(8, (val/max)*100);
+    container.innerHTML += `
+      <div class="funnel-row">
+        <div class="funnel-label">${label}</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="width:${barW}%;background:${colors[i]};min-width:60px">
+            ${fmt(val)}
+          </div>
+        </div>
+        <div class="funnel-pct">${pct}%</div>
+      </div>`;
+  });
+}
+
+// ─── POST TYPE CHART ─────────────────────────────────────
+function buildTypeChart(data) {
+  destroyChart('type');
+  const types = ['Image','Video','Carousel'];
+  const byType = {};
+  types.forEach(t => { byType[t] = data.filter(r=>r.post_type===t); });
+  const ctx = document.getElementById('typeChart').getContext('2d');
+  charts.type = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: types,
+      datasets: [
+        {
+          label: 'Avg Likes',
+          data: types.map(t => byType[t].length ? Math.round(byType[t].reduce((a,r)=>a+r.likes,0)/byType[t].length) : 0),
+          backgroundColor: COLORS.rose + 'CC',
+          borderRadius: 4
+        },
+        {
+          label: 'Avg Comments',
+          data: types.map(t => byType[t].length ? Math.round(byType[t].reduce((a,r)=>a+r.comments,0)/byType[t].length) : 0),
+          backgroundColor: COLORS.gold + 'CC',
+          borderRadius: 4
+        },
+        {
+          label: 'Avg Saves',
+          data: types.map(t => byType[t].length ? Math.round(byType[t].reduce((a,r)=>a+r.saves,0)/byType[t].length) : 0),
+          backgroundColor: COLORS.mint + 'CC',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#9B8FA5', font: { size: 10 } }, position: 'bottom' },
+        tooltip: { backgroundColor: '#221B26', titleColor: '#F2E8F0', bodyColor: '#9B8FA5', borderColor: '#2E2438', borderWidth: 1 }
+      },
+      scales: {
+        x: { ticks: { color: '#9B8FA5' }, grid: { color: '#1E1822' } },
+        y: { ticks: { color: '#5C4F65' }, grid: { color: '#1E1822' } }
+      }
+    }
+  });
+}
+
+// ─── DAY OF WEEK CHART ───────────────────────────────────
+function buildDayChart(data) {
+  destroyChart('day');
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayEng = {};
+  days.forEach(d => { 
+    const dr = data.filter(r => new Date(r.post_date).toLocaleDateString('en-US',{weekday:'long'}) === d);
+    dayEng[d] = dr.length ? (dr.reduce((a,r)=>a+r.engagement_rate,0)/dr.length).toFixed(2) : 0;
+  });
+  const vals = days.map(d => dayEng[d]);
+  const maxVal = Math.max(...vals);
+  const ctx = document.getElementById('dayChart').getContext('2d');
+  charts.day = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: days.map(d => d.slice(0,3)),
+      datasets: [{
+        label: 'Avg Engagement Rate (%)',
+        data: vals,
+        backgroundColor: vals.map(v => v == maxVal ? COLORS.rose : COLORS.lavender + '99'),
+        borderRadius: 6,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor: '#221B26', titleColor: '#F2E8F0', bodyColor: '#9B8FA5', borderColor: '#2E2438', borderWidth: 1,
+          callbacks: { label: ctx => ` ${ctx.raw}% avg engagement` } }
+      },
+      scales: {
+        x: { ticks: { color: '#9B8FA5' }, grid: { color: '#1E1822' } },
+        y: { ticks: { color: '#5C4F65', callback: v => v+'%' }, grid: { color: '#1E1822' }, suggestedMin: 8, suggestedMax: 14 }
+      }
+    }
+  });
+}
+
+// ─── TOP TABLES ──────────────────────────────────────────
+function buildTopTables(data) {
+  const topLikes = [...data].sort((a,b) => b.likes - a.likes).slice(0,10);
+  const topEng = [...data].sort((a,b) => b.engagement_rate - a.engagement_rate).slice(0,10);
+  
+  const pillClass = t => t === 'Video' ? 'pill-video' : t === 'Carousel' ? 'pill-carousel' : 'pill-image';
+
+  document.querySelector('#topLikesTable tbody').innerHTML = topLikes.map((r,i) => `
+    <tr>
+      <td class="rank-num">${i+1}</td>
+      <td class="caption-cell">${r.caption}</td>
+      <td><span class="type-pill ${pillClass(r.post_type)}">${r.post_type}</span></td>
+      <td class="metric-val">${fmt(r.likes)}</td>
+      <td style="color:var(--text-muted)">${r.engagement_rate}%</td>
+    </tr>`).join('');
+
+  document.querySelector('#topEngTable tbody').innerHTML = topEng.map((r,i) => `
+    <tr>
+      <td class="rank-num">${i+1}</td>
+      <td class="caption-cell">${r.caption}</td>
+      <td><span class="type-pill ${pillClass(r.post_type)}">${r.post_type}</span></td>
+      <td class="metric-val" style="color:var(--rose)">${r.engagement_rate}%</td>
+      <td style="color:var(--text-muted)">${fmt(r.likes)}</td>
+    </tr>`).join('');
+}
+
+// ─── HASHTAG CHART ───────────────────────────────────────
+function buildHashtagChart(data) {
+  destroyChart('hashtag');
+  
+  const themeMap = r => {
+    const ht = r.hashtags;
+    if (ht.includes('BlusherBae') || ht.includes('RosyGlow')) return 'Blush & Glow';
+    if (ht.includes('EyeMakeup') || ht.includes('EyelinerGoals')) return 'Eye Makeup';
+    if (ht.includes('LongLasting') || ht.includes('PrimerTime')) return 'Long-Lasting';
+    if (ht.includes('BoldLips') || ht.includes('NudeShades')) return 'Lip Shades';
+    if (ht.includes('HighlighterGlow') || ht.includes('StrobeLife')) return 'Highlighter';
+    if (ht.includes('FoundationFinish') || ht.includes('FlawlessSkin')) return 'Foundation';
+    if (ht.includes('MascaraMagic') || ht.includes('LashGoals')) return 'Mascara';
+    if (ht.includes('NailArt') || ht.includes('ManicureMonday')) return 'Nail Art';
+    if (ht.includes('GlitterEyes') || ht.includes('FestiveMakeup')) return 'Festive Looks';
+    return 'General';
+  };
+
+  const themes = {};
+  data.forEach(r => {
+    const t = themeMap(r);
+    if (!themes[t]) themes[t] = [];
+    themes[t].push(r);
+  });
+
+  const labels = Object.keys(themes);
+  const engData = labels.map(t => (themes[t].reduce((a,r)=>a+r.engagement_rate,0)/themes[t].length).toFixed(2));
+  const countData = labels.map(t => themes[t].length);
+
+  const colorArr = [COLORS.blush, COLORS.teal, COLORS.lavender, COLORS.rose, COLORS.gold, COLORS.mint, COLORS.teal, COLORS.amber, COLORS.pink2, COLORS.rose];
+
+  const ctx = document.getElementById('hashtagChart').getContext('2d');
+  charts.hashtag = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Avg Engagement Rate (%)',
+          data: engData,
+          backgroundColor: colorArr.slice(0, labels.length).map(c => c+'CC'),
+          borderRadius: 5,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Post Count',
+          data: countData,
+          type: 'line',
+          borderColor: COLORS.gold,
+          backgroundColor: 'rgba(212,168,83,0.08)',
+          pointBackgroundColor: COLORS.gold,
+          tension: 0.4,
+          yAxisID: 'y2',
+          pointRadius: 5,
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: {
+        legend: { labels: { color: '#9B8FA5', font: { size: 10 } }, position: 'bottom' },
+        tooltip: { backgroundColor: '#221B26', titleColor: '#F2E8F0', bodyColor: '#9B8FA5', borderColor: '#2E2438', borderWidth: 1 }
+      },
+      scales: {
+        x: { ticks: { color: '#9B8FA5', font: { size: 10 } }, grid: { color: '#1E1822' } },
+        y: { position: 'left', ticks: { color: '#5C4F65', callback: v => v+'%' }, grid: { color: '#1E1822' }, title: { display: true, text: 'Avg Eng Rate', color: '#5C4F65', font: { size: 9 } } },
+        y2: { position: 'right', ticks: { color: '#5C4F65' }, grid: { display: false }, title: { display: true, text: 'Posts', color: '#5C4F65', font: { size: 9 } } }
+      }
+    }
+  });
+}
+
+// ─── RENDER ALL ─────────────────────────────────────────
+function renderAll() {
+  const data = getFiltered();
+  updateKPIs(data);
+  buildMonthlyChart(data);
+  buildFunnel(data);
+  buildTypeChart(data);
+  buildDayChart(data);
+  buildTopTables(data);
+  buildHashtagChart(data);
+}
+
+// ─── FILTER CONTROLS ────────────────────────────────────
+document.querySelectorAll('#type-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#type-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeType = btn.dataset.type;
+    renderAll();
+  });
+});
+
+document.querySelectorAll('#period-filters .filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#period-filters .filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activePeriod = btn.dataset.period;
+    renderAll();
+  });
+});
+
+// ─── INIT ───────────────────────────────────────────────
+Chart.defaults.color = '#9B8FA5';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+renderAll();
+</script>
+</body>
+</html>
